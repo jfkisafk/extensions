@@ -104,6 +104,60 @@
       "mode": "view"
     },
     {
+      "name": "see-mail-menu",
+      "title": "See Mail Menu Bar",
+      "description": "Display mail in the Menu Bar",
+      "mode": "menu-bar",
+      "interval": "5m",
+      "preferences": [
+        {
+          "name": "mailbox",
+          "description": "Mailbox shown in the Menu Bar.",
+          "type": "dropdown",
+          "required": false,
+          "title": "Mailbox",
+          "default": "Recent Mail",
+          "data": [
+            {
+              "title": "Recent",
+              "value": "Recent Mail"
+            },
+            {
+              "title": "Important",
+              "value": "Important Mail"
+            }
+          ]
+        },
+        {
+          "name": "maxItems",
+          "description": "Maximum messages shown per account.",
+          "type": "dropdown",
+          "required": false,
+          "title": "Max messages per account",
+          "default": "5",
+          "data": [
+            {
+              "title": "5",
+              "value": "5"
+            },
+            {
+              "title": "10",
+              "value": "10"
+            }
+          ]
+        },
+        {
+          "name": "showCount",
+          "description": "Show message count with menu bar icon.",
+          "type": "checkbox",
+          "required": false,
+          "label": "Show Count",
+          "title": "Appearance",
+          "default": true
+        }
+      ]
+    },
+    {
       "name": "see-mail-accounts",
       "title": "See Mail Accounts",
       "description": "See mail accounts.",

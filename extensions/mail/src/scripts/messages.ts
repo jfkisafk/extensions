@@ -255,6 +255,7 @@ export const getMessages = async (
   mailbox: Mailbox,
   unreadOnly = false,
   numMessages = messageLimit,
+  applyLimit = true,
 ): Promise<Message[] | undefined> => {
   let messages = Cache.getMessages(account.id, mailbox.name);
 
@@ -308,7 +309,7 @@ export const getMessages = async (
   Cache.setMessages(messages, account.id, mailbox.name);
 
   const result = unreadOnly ? messages.filter((x) => !x.read) : messages;
-  return result.slice(0, messageLimit);
+  return applyLimit ? result.slice(0, messageLimit) : result;
 };
 
 export const getMessageContent = async (message: Message, mailbox: Mailbox) => {
