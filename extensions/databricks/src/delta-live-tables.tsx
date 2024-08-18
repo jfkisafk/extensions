@@ -1,10 +1,9 @@
-import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
+import {Action, ActionPanel, Color, Detail, List} from "@raycast/api";
 
-export default function Command() {
-  return (
+const DeltaLiveTables = () => (
     <List>
       <List.Item
-        icon={Icon.Bird}
+        icon={{source: "databricks.svg"}}
         title="Greeting"
         actions={
           <ActionPanel>
@@ -14,4 +13,5 @@ export default function Command() {
       />
     </List>
   );
-}
+
+export default DeltaLiveTables;

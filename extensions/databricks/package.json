@@ -12,12 +12,6 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "workflows",
-      "title": "Workflows",
-      "description": "Manage jobs for your databricks workspaces",
-      "mode": "view"
-    },
-    {
       "name": "delta-live-tables",
       "title": "Delta Live Tables",
       "description": "Manage Delta Live Table pipelines for your workspaces",
