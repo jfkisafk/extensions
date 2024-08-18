@@ -1,17 +1,13 @@
-import {Action, ActionPanel, Color, Detail, List} from "@raycast/api";
+import { List } from "@raycast/api";
 
 const DeltaLiveTables = () => (
-    <List>
-      <List.Item
-        icon={{source: "databricks.svg"}}
-        title="Greeting"
-        actions={
-          <ActionPanel>
-            <Action.Push title="Show Details" target={<Detail markdown="# Hey! 👋" />} />
-          </ActionPanel>
-        }
-      />
-    </List>
-  );
+  <List>
+    <List.EmptyView
+      icon={{ source: "databricks.svg" }}
+      title={"No pipelines found!"}
+      description={"Your workspace does not have any pipelines."}
+    />
+  </List>
+);
 
 export default DeltaLiveTables;
