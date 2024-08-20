@@ -1,21 +1,23 @@
 import {
-    Color,
-    environment,
-    getPreferenceValues,
-    Icon,
-    launchCommand,
-    LaunchType,
-    MenuBarExtra,
-    openCommandPreferences
+  Action,
+  Color,
+  environment,
+  getPreferenceValues,
+  Icon,
+  launchCommand,
+  LaunchType,
+  MenuBarExtra,
+  openCommandPreferences,
 } from "@raycast/api";
 import { useCachedPromise } from "@raycast/utils";
 
 import { Mailbox } from "./types";
 import { getAccounts } from "./scripts/accounts";
-import { getMessages } from "./scripts/messages";
-import {MenuBarItem, MenuBarSection} from "./utils";
+import { GetMessageResult, getMessages, openMessage } from "./scripts/messages";
+import { MenuBarItem, MenuBarSection } from "./utils";
 import { isImportantMailbox, isInbox } from "./utils/mailbox";
-import {MailIcon} from "./utils/presets";
+import { MailIcon } from "./utils/presets";
+import { MessageDetail } from "./components";
 
 export default function SeeMailMenu() {
   const { maxItems, showCount, mailbox } = getPreferenceValues<Preferences.SeeMailMenu>();
@@ -33,18 +35,19 @@ export default function SeeMailMenu() {
         return [];
       }
 
-      const messages = await Promise.all(
+      const responses = await Promise.all(
         accounts.map((account) => {
           const mailbox = account.mailboxes.find(_filter);
           if (!mailbox) {
-            return [];
+            return { messages: [], messageCount: 0 } as GetMessageResult;
           }
           return getMessages(account, mailbox, true, parseInt(maxItems), false);
         }),
       );
 
       return accounts.map((account, index) => {
-        account.messages = messages[index] ?? [];
+        account.messages = responses[index].messages ?? [];
+        account.messageCount = responses[index].messageCount ?? 0;
         return account;
       });
     },
@@ -54,10 +57,13 @@ export default function SeeMailMenu() {
     },
   );
 
-  const numMessages = (accounts ?? []).reduce((a, account) => a + (account.messages ? account.messages.length : 0), 0);
-  console.log(numMessages);
+  const numMessages = (accounts ?? []).reduce((a, account) => a + (account.messageCount ?? 0), 0);
   const reloadMenu = () => launchCommand({ name: environment.commandName, type: LaunchType.UserInitiated });
-  const launchExtCommand = () => launchCommand({name: mailbox === "Recent Mail" ? "see-recent-mail" : "see-important-mail", type: LaunchType.UserInitiated });
+  const launchExtCommand = () =>
+    launchCommand({
+      name: mailbox === "Recent Mail" ? "see-recent-mail" : "see-important-mail",
+      type: LaunchType.UserInitiated,
+    });
 
   return (
     <MenuBarExtra
@@ -70,15 +76,26 @@ export default function SeeMailMenu() {
         (accounts ?? []).map((account) => {
           const folder = account.mailboxes.find(mailboxFilter);
           return folder ? (
-            <MenuBarSection title={account.name} key={account.id} maxChildren={parseInt(maxItems)} moreElement={(hidden) => (
-                <MenuBarItem title={`... ${hidden} more`} onAction={launchExtCommand} />
-            )} emptyElement={<MenuBarItem title="No unread messages" />}>
-                {account.messages?.map(msg => (<MenuBarItem key={msg.id} title={msg.subject ?? "No Subject"} icon={msg.read ? MailIcon.Read : MailIcon.Unread} />))}
+            <MenuBarSection
+              title={account.name}
+              key={account.id}
+              maxChildren={account.messageCount}
+              moreElement={(hidden) => <MenuBarItem title={`... ${hidden} more`} onAction={launchExtCommand} />}
+              emptyElement={<MenuBarItem title="No unread messages" />}
+            >
+              {account.messages?.map((msg) => (
+                <MenuBarItem
+                  key={msg.id}
+                  title={msg.subject ?? "No Subject"}
+                  icon={msg.read ? MailIcon.Read : MailIcon.Unread}
+                  onAction={() => openMessage(msg, folder)}
+                />
+              ))}
             </MenuBarSection>
           ) : undefined;
         })}
       {!error && !numMessages && !isLoadingAccounts && (
-        <MenuBarItem title={"No Recent Unread Messages"} icon={{ source: Icon.Envelope, tintColor: Color.Purple }}/>
+        <MenuBarItem title={"No Recent Unread Messages"} icon={{ source: Icon.Envelope, tintColor: Color.Purple }} />
       )}
       {error && (
         <MenuBarItem
@@ -88,15 +105,20 @@ export default function SeeMailMenu() {
         />
       )}
 
-        <MenuBarSection>
-            <MenuBarItem
-                title={`Open ${mailbox}`}
-                icon={Icon.Envelope}
-                shortcut={{ modifiers: ["cmd"], key: "o" }}
-                onAction={launchExtCommand}
-            />
-            <MenuBarItem title="Configure Command" shortcut={{ modifiers: ["cmd"], key: "," }} icon={Icon.Gear} onAction={openCommandPreferences} />
-        </MenuBarSection>
+      <MenuBarSection>
+        <MenuBarItem
+          title={`Open ${mailbox}`}
+          icon={Icon.Envelope}
+          shortcut={{ modifiers: ["cmd"], key: "o" }}
+          onAction={launchExtCommand}
+        />
+        <MenuBarItem
+          title="Configure Command"
+          shortcut={{ modifiers: ["cmd"], key: "," }}
+          icon={Icon.Gear}
+          onAction={openCommandPreferences}
+        />
+      </MenuBarSection>
     </MenuBarExtra>
   );
 }

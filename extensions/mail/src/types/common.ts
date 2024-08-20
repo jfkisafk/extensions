@@ -15,6 +15,7 @@ export type Account = {
   numUnread: number;
   mailboxes: Mailbox[];
   messages?: Message[];
+  messageCount?: number;
 };
 
 export type Mailbox = {

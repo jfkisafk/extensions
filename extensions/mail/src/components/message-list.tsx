@@ -22,10 +22,12 @@ export const MessageList = (props: MessageListProps) => {
   const messagesAbortController = useRef<AbortController>(new AbortController());
 
   const {
-    data: messages,
+    data,
     mutate: mutateMessages,
     isLoading: isLoadingMessages,
   } = useCachedPromise(getMessages, [account, mailbox], { abortable: messagesAbortController });
+
+  const { messages, messageCount } = data ?? { messageCount: 0, messages: [] };
 
   const handleAction = useCallback((action: () => Promise<void>, account: Account, mailbox: Mailbox) => {
     mutateMessages(
@@ -33,16 +35,14 @@ export const MessageList = (props: MessageListProps) => {
         messagesAbortController.current.abort();
 
         await action();
-        const messages = await getMessages(account, mailbox);
-
-        return messages;
+        return await getMessages(account, mailbox);
       }),
       {
         optimisticUpdate: (data) => {
           if (!data) return data;
 
           const messages = Cache.getMessages(account.id, mailbox.name);
-          return messages;
+          return { messageCount, messages };
         },
       },
     );

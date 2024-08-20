@@ -250,13 +250,18 @@ export const getRecipients = async (message: Message, mailbox: Mailbox): Promise
   }
 };
 
+export type GetMessageResult = {
+  messages: Message[];
+  messageCount: number;
+};
+
 export const getMessages = async (
   account: Account,
   mailbox: Mailbox,
   unreadOnly = false,
   numMessages = messageLimit,
   applyLimit = true,
-): Promise<Message[] | undefined> => {
+): Promise<GetMessageResult> => {
   let messages = Cache.getMessages(account.id, mailbox.name);
 
   const first = messages.length > 0 ? messages[0].id : undefined;
@@ -281,13 +286,16 @@ export const getMessages = async (
     repeat with messageData in msgs
       set output to output & item 1 of messageData & "$break" & item 2 of messageData & "$break" & item 3 of messageData & "$break" & item 4 of messageData & "$break" & item 5 of messageData & "$break" & item 6 of messageData & "$break" & item 7 of messageData & "$end"
     end repeat
+    set output to messageCount & "$end" & output
     return output
   `;
 
-  const response: string[] = (await runAppleScript(script)).split("$end");
+  let [count, ...response] = (await runAppleScript(script)).split("$end");
+  const messageCount = parseInt(count.split(",")[0]);
   response.pop();
 
   const newMessages: Message[] = response.map((line: string) => {
+    line = line.startsWith(", ") ? line.slice(2) : line;
     const [id, subject, senderName, senderAddress, date, read, numAttachments] = line.split("$break");
     return {
       id,
@@ -308,8 +316,9 @@ export const getMessages = async (
 
   Cache.setMessages(messages, account.id, mailbox.name);
 
-  const result = unreadOnly ? messages.filter((x) => !x.read) : messages;
-  return applyLimit ? result.slice(0, messageLimit) : result;
+  let result = unreadOnly ? messages.filter((x) => !x.read) : messages;
+  result = applyLimit ? result.slice(0, messageLimit) : result;
+  return { messageCount, messages: result };
 };
 
 export const getMessageContent = async (message: Message, mailbox: Mailbox) => {

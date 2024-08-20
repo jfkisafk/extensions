@@ -21,12 +21,13 @@ export default function SeeImportantMail() {
     }
 
     const messages = await Promise.all(
-      accounts.map((account) => {
+      accounts.map(async (account) => {
         const mailbox = account.mailboxes.find(isImportantMailbox);
         if (!mailbox) {
           return [];
         }
-        return getMessages(account, mailbox, true);
+        const { messages } = await getMessages(account, mailbox, true);
+        return messages;
       }),
     );
 
@@ -54,17 +55,14 @@ export default function SeeImportantMail() {
         accountsAbortController.current.abort();
 
         await action();
-        const accounts = await fetchAccounts();
-
-        return accounts;
+        return await fetchAccounts();
       }),
       {
         optimisticUpdate: (data) => {
           if (!data) return data;
 
           return data.map((account) => {
-            const messages = Cache.getMessages(account.id, mailbox.name);
-            account.messages = messages;
+            account.messages = Cache.getMessages(account.id, mailbox.name);
             return account;
           });
         },
